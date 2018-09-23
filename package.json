@@ -1,0 +1,30 @@
+{
+  "name": "binack",
+  "version": "1.0.0",
+  "description": "A front-end performance or statistic data collect library.",
+  "main": "index.js",
+  "author": "Yang G",
+  "license": "MIT",
+  "scripts": {
+    "tslint": "tslint ./src/*.ts",
+    "build": "rimraf -rf ./dist ./build && tsc && rollup -c && rimraf -rf ./build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BuildItNow/BINACK"
+  },
+  "devDependencies": {
+    "pre-commit": "^1.2.2",
+    "rimraf": "^2.6.2",
+    "rollup": "^0.66.2",
+    "rollup-plugin-commonjs": "^9.1.8",
+    "rollup-plugin-node-resolve": "^3.4.0",
+    "rollup-plugin-uglify": "^6.0.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3",
+    "uglify-es": "^3.3.9"
+  },
+  "pre-commint": [
+    "tslint"
+  ]
+}
