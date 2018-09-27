@@ -14,7 +14,7 @@ const DEFAULT_OPTIONS: Options = {
 
 export enum EAck {
     READY = 'rdy',
-    SPEED = 'spd',
+    POINT = 'pnt',
     ERROR = 'err',
     API = 'api',
     COUNT = 'cnt',
@@ -38,10 +38,14 @@ export interface ErrorParams {
     stack: string;
 }
 
+const now = Date.now ? Date.now : () => { return +new Date(); };
+
 const MAX_STRING = 1000;
+const START_TIME = now();
 
 abstract class BINAck {
     protected options: Options;
+    protected startTime: number;
 
     private ackQueue: AckParams[];
     private ackTimer: any;
@@ -49,6 +53,8 @@ abstract class BINAck {
     constructor(options: Options) {
         this.options = {...DEFAULT_OPTIONS};
         this.setOptions(options);
+
+        this.startTime = START_TIME;
     }
 
     public init() {
@@ -63,9 +69,15 @@ abstract class BINAck {
         }
     }
     
-    // public ackSpeed(point: number, cost?: number) {
+    public ackPoint(point: string) {
+        const time = now() - this.startTime;
 
-    // }
+        this.ack({
+            _ack: EAck.POINT,
+            point,
+            time,
+        }, false, 1);
+    }
 
     public ackError(message: string, type?: string, params?: ErrorParams) {
         if (message.length > MAX_STRING) {
@@ -143,7 +155,7 @@ abstract class BINAck {
         }
 
         params._app = this.options.app;
-        params._time = Date.now();
+        params._time = now();
         if (this.options.nick) {
             params._nick = this.options.nick;
         }

@@ -1,12 +1,13 @@
 {
   "name": "binack",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A front-end performance or statistic data collect library.",
   "main": "index.js",
   "author": "Yang G",
   "license": "MIT",
   "scripts": {
     "tslint": "tslint ./src/*.ts",
+    "compile": "rimraf -rf ./build && tsc",
     "build": "rimraf -rf ./dist ./build && tsc && rollup -c && rimraf -rf ./build"
   },
   "repository": {

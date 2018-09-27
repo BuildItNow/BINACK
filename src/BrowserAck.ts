@@ -7,6 +7,14 @@ class BrowserAck extends BINAck {
     public init() {
         super.init();
 
+        const startTime = this.startTime;
+
+        try {
+            this.startTime = performance.timing.fetchStart || startTime;
+        } catch (e) {
+            this.startTime = startTime;
+        }
+        
         this.imgId = 0;
         this.imgs = {};
 
@@ -87,48 +95,48 @@ class BrowserAck extends BINAck {
     }
 
     private hookGlobalError() {
-        const oldOnError = window.onerror;
-        const self = this;
-        window.onerror = function(message: any, file: string, line: number, column: number, error: Error) {
-            if (oldOnError) {
-                oldOnError.apply(this, arguments);
-            }
-
-            if (!message) {
+        this.on('error', (evt) => {
+            if (!evt || !evt.message) {
                 return;
             }
-
-            try {
-                const type = typeof message;
-                if (type === 'object' && message.message) {
-                    const evt = message;
-                    
-                    message = evt.message;
-                    file = file || evt.filename;
-                    line = line || evt.lineno;
-                    column = column || evt.colno;
-                } else if (type === 'object') {
-                    message = JSON.stringify(message);
-                }
-            } catch (e) {
-                //
-            }
+            const message = evt.message;
+            const file = evt.filename;
+            const line = evt.lineno;
+            const column = evt.colno;
+            const error = evt.error;
 
             if (typeof message !== 'string') {
                 return;
             }
 
             if (file) {
-                self.ackError(message, 'sys', {
+                this.ackError(message, 'sys', {
                     file,
                     line,
                     column,
                     stack: (error && error.stack) || '',
                 });
             } else {
-                self.ackError(message, 'sys');
+                this.ackError(message, 'sys');
             }
-        };
+        });
+
+        this.on('unhandledrejection', (evt) => {
+            const error = evt.reason;
+            if (!error || !error.message) {
+                return;
+            }
+
+            const message = error.message;
+            const stack = error.stack || '';
+
+            this.ackError(message, 'sys', {
+                file: location.href,
+                line: -1,
+                column: -1,
+                stack,
+            });
+        });
     }
 
     private hookReady() {
@@ -159,11 +167,7 @@ class BrowserAck extends BINAck {
             this.flushAckQueue();
         };
 
-        if (window.addEventListener) {
-            window.addEventListener('beforeunload', onUnload, false);
-        } else if ((window as any).attachEvent) {
-            (window as any).attachEvent('onbeforeunload', onUnload);
-        }
+        this.on('beforeunload', onUnload);
     }
 
     private genQueryString(params: AckParams): string {
@@ -186,6 +190,14 @@ class BrowserAck extends BINAck {
         }
         
         return kvs.join('&');
+    }
+
+    private on(name, handle, options?: boolean) {
+        if (window.addEventListener) {
+            window.addEventListener(name, handle, options);
+        } else if ((window as any).attachEvent) {
+            (window as any).attachEvent('on' + name, handle);
+        }
     }
 }
 
